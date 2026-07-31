@@ -1,45 +1,24 @@
-local os_type = require("utils.os_type")
-
 return {
 	{
 		"nvim-treesitter/nvim-treesitter",
-		tag = "v0.9.3",
+		-- Important to use a commit which is on the branch "main" rather than "master"
+		-- Currently no tags point to that branch
+		commit = "7248feaca45e4d944591497964bc19afa89ad1c6",
+		lazy = false,
 		build = ":TSUpdate",
-		event = { "BufReadPost", "BufNewFile" },
 		config = function()
-			-- Most OS can install cc pretty easily, except for windows
-			-- Zig is the easiest compiler to get on Windows
-			local treesitter_compilers
-			if os_type.is_windows then
-				treesitter_compilers = { "zig" }
-			else
-				treesitter_compilers = { "cc" }
-			end
-
-			require("nvim-treesitter.install").compilers = treesitter_compilers
-			require("nvim-treesitter.install").prefer_git = true
-			require("nvim-treesitter.configs").setup({
-				highlight = { enable = true },
-				indent = { enable = true },
-
-				-- Treesitter for json sucks, and the default syntax works
-				ensure_installed = {
-					"lua",
-					"python",
-					"java",
-					"html",
-					"css",
-					"javascript",
-                    "typescript",
-					"rust",
-
-					-- If I don't have this, WSL bugs out on every comment
-					"comment",
-
-					-- Needed for viewing hover information
-					"markdown",
-					"markdown_inline",
-				},
+			require("nvim-treesitter").install({
+				-- Lua is automatically installed by neovim without this plugin
+				-- Can view the currently installed parsers by running:
+				-- `vim.api.nvim_get_runtime_file('parser/*', true)`
+				"python",
+				"java",
+				"html",
+				"css",
+				"javascript",
+				"typescript",
+				"rust",
+				"swift",
 			})
 		end,
 	},

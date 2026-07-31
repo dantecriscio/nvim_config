@@ -1,11 +1,15 @@
 local map = require("utils.map").map
 local dap_utils = require("utils.dapUtils")
 local java_utils = require("utils.javaUtils")
+local treesitter = require("utils.treesitter")
+local folding = require("core.myModules.folding")
+local lsp = require("lsp.serverCommon")
 
 -- Begin this file with some low-hanging fruit
 -- Setup auto-commands and buffer-local preferences
 -- These work the same for either source java files or class files
-local folding = require("core.myModules.folding")
+treesitter.setup_highlighting()
+treesitter.setup_indentation()
 folding.setup_treesitter_folding()
 
 -- Use 4 spaces instead of tabs (Java Checkstyle linter prefers spaces)
@@ -73,7 +77,7 @@ local is_normal_class_file = vim.endswith(bufname, ".class") and
 	not is_jdt_uri_class_file
 
 local function jdtls_start_or_attach()
-	return require("lsp.serverCommon").start_or_attach(
+	return lsp.start_or_attach(
 		java_utils.server_config_name,
 		jdtls_root_dir,
 		is_single_file
@@ -144,7 +148,7 @@ else
 	client = vim.lsp.get_client_by_id(client_id)
 
 	-- Only normal .java files should have spellchecking
-	require("lsp.serverCommon").start_or_attach(
+	lsp.start_or_attach(
 		"cspellServer",
 		jdtls_root_dir,
 		is_single_file

@@ -10,20 +10,14 @@ return {
 	},
 	{
 		"windwp/nvim-ts-autotag",
-		commit = "6be1192965df35f94b8ea6d323354f7dc7a557e4",
-		dependencies = { "nvim-treesitter/nvim-treesitter" },
+		commit = "88c1453db4ba7dd24131086fe51fdf74e587d275",
 		event = "InsertEnter",
-		config = function()
-			require("nvim-treesitter.configs").setup({
-				autotag = {
-					enable = true,
-					enable_rename = false,
-					enable_close = true,
-					enable_close_on_slash = true,
-					filetypes = { "html", "xml" },
-				},
-			})
-		end,
+		opts = {
+			enable_rename = false,
+			enable_close = true,
+			enable_close_on_slash = true,
+			filetypes = { "html", "xml" },
+		},
 	},
 	{
 		"numToStr/Comment.nvim",

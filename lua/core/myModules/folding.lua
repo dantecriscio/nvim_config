@@ -56,10 +56,6 @@ fold_keymap(alpabetical_key_map_modes, "zC", "zC")
 fold_keymap(alpabetical_key_map_modes, "zR", "zR")
 fold_keymap(alpabetical_key_map_modes, "zM", "zM")
 
--- These options come from Treesitter's README on how to set up folding
-vim.opt.foldexpr = "nvim_treesitter#foldexpr()"
-vim.opt.foldenable = false
-
 -- Set custom text which appears whenever we have a fold
 function _G.MyFoldText()
 	local first_line = vim.fn.getline(vim.v.foldstart)
@@ -122,13 +118,16 @@ end
 local M = {}
 
 function M.setup_syntax_folding()
+	vim.wo[0][0].foldmethod = "syntax"
 	vim.cmd("setlocal foldmethod=syntax")
 
 	remember_folding_autocmds()
 end
 
 function M.setup_treesitter_folding()
-	vim.cmd("setlocal foldmethod=expr")
+	-- These options come from Treesitter's README on how to set up folding
+	vim.wo[0][0].foldmethod = "expr"
+	vim.wo[0][0].foldexpr = "v:lua.vim.treesitter.foldexpr()"
 
 	remember_folding_autocmds()
 end

@@ -1,5 +1,16 @@
 local M = {}
 
+-- Methods for setting up treesitter once when a language file is opened
+function M.setup_highlighting()
+	vim.treesitter.start()
+end
+
+function M.setup_indentation()
+	vim.bo.indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()"
+end
+
+
+-- Methods for traversing the tree to find specific tokens (like function names) in the buffer
 ---@alias ResultStatusCode
 ---| 0 # SUCCESS
 ---| 1 # ROOT_NODE_REACHED
