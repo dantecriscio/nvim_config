@@ -7,7 +7,6 @@ vim.opt.background = "dark"
 
 -- Don't automatically make the next line a comment if the current line is
 vim.api.nvim_create_autocmd({ "BufEnter" }, {
-	pattern = "*",
 	callback = function()
 		vim.opt.formatoptions:remove({ "c", "r", "o" })
 	end,
@@ -19,7 +18,6 @@ vim.opt.splitbelow = true
 
 -- Make the cursor always be a block (a is for all modes)
 vim.api.nvim_create_autocmd({ "BufEnter" }, {
-	pattern = "*",
 	callback = function()
 		vim.opt.guicursor = "a:block"
 	end,

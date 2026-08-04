@@ -1,60 +1,21 @@
+local map = require("utils.map").map
 local alpabetical_key_map_modes = require("utils.map").alpabetical_key_map_modes
+local is_normal_file_buffer = require("utils.buffers").is_normal_file_buffer
 
---[[ Fixes a strange issue with neovim folding
-Folds are computed initially, but not recomputed after the buffer is modified
-
-For example, lets say we open a new buffer with the following lines:
-	1  if true then
-	2      x = 1
-	3  end
-Then vim will correctly compute that lines 1-3 should be folded,
-assuming we are using the syntax or expr (treesitter) folding methods.
-
-But, lets say we add a new line in the middle:
-	1  if true then
-	2      x = 1
-	3      y = 2
-	4  end
-Still, vim will think that only lines 1-3 should be folded.
-This leads to an incorrect and confusing fold:
-
-One way to fix this is to save the buffer, and then reload with :e
-But usually we do not want to save just because we are folding!
-
-A strange solution is that updating the foldmethod with
-vim.o.foldmethod = "method" will force vim to recompute folds.
-This even works if we set the option to its current value!
-
-We use this trick before all folding keybinds]]
-
--- Assume that lhs and rhs are both strings
--- We will wrap the rhs in a folding reset
-local function fold_keymap(mode, lhs, rhs, opts)
-	local options = { noremap = true, silent = true }
-	if opts then
-		options = vim.tbl_extend("force", options, opts)
-	end
-	vim.keymap.set(mode, lhs, function()
-		local method = vim.o.foldmethod
-		vim.cmd("setlocal foldmethod="..method)
-
-		-- The exclamation point means to not use remappings
-		-- No exclamation point would be infinite recursion,
-		-- and would which would crash vim
-		vim.cmd("normal! " .. rhs)
-	end, options)
+local function open_all_folds()
+	vim.opt.foldlevel = 99
+end
+local function close_all_folds()
+	vim.opt.foldlevel = 0
 end
 
-fold_keymap(alpabetical_key_map_modes, "ze", "]z")
-fold_keymap(alpabetical_key_map_modes, "zb", "[z")
+-- Start with folds completely open for all files
+open_all_folds()
 
-fold_keymap(alpabetical_key_map_modes, "za", "za")
-fold_keymap(alpabetical_key_map_modes, "zo", "zo")
-fold_keymap(alpabetical_key_map_modes, "zO", "zO")
-fold_keymap(alpabetical_key_map_modes, "zc", "zc")
-fold_keymap(alpabetical_key_map_modes, "zC", "zC")
-fold_keymap(alpabetical_key_map_modes, "zR", "zR")
-fold_keymap(alpabetical_key_map_modes, "zM", "zM")
+map(alpabetical_key_map_modes, "ze", "]z")
+map(alpabetical_key_map_modes, "zb", "[z")
+map(alpabetical_key_map_modes, "zR", open_all_folds)
+map(alpabetical_key_map_modes, "zM", close_all_folds)
 
 -- Set custom text which appears whenever we have a fold
 function _G.MyFoldText()
@@ -96,32 +57,28 @@ vim.opt.fillchars:append({ fold = " " })
 
 -- Automatically remembers folds after closing and reopening
 local remember = vim.api.nvim_create_augroup("remember", { clear = true })
-local function remember_folding_autocmds()
-	vim.api.nvim_create_autocmd({ "BufWinLeave", "BufWritePost" }, {
-		buffer = 0,
-		group = remember,
-		command = "noautocmd silent! mkview",
-	})
+vim.api.nvim_create_autocmd({ "BufWinLeave" }, {
+  group = remember,
+  callback = function (args)
+  	if is_normal_file_buffer(args.buf) then
+		vim.cmd("mkview")
+	end
+  end,
+})
 
-	vim.api.nvim_create_autocmd({ "BufWinEnter" }, {
-		buffer = 0,
-		group = remember,
-		callback = function()
-			vim.cmd([[
-				normal zR
-				noautocmd silent! loadview
-			]])
-		end,
-	})
-end
+vim.api.nvim_create_autocmd({ "BufWinEnter" }, {
+  group = remember,
+  callback = function (args)
+  	if is_normal_file_buffer(args.buf) then
+		vim.cmd("silent! loadview")
+	end
+  end,
+})
 
 local M = {}
 
 function M.setup_syntax_folding()
 	vim.wo[0][0].foldmethod = "syntax"
-	vim.cmd("setlocal foldmethod=syntax")
-
-	remember_folding_autocmds()
 end
 
 function M.setup_treesitter_folding()
@@ -129,7 +86,40 @@ function M.setup_treesitter_folding()
 	vim.wo[0][0].foldmethod = "expr"
 	vim.wo[0][0].foldexpr = "v:lua.vim.treesitter.foldexpr()"
 
-	remember_folding_autocmds()
+	--[[
+	TODO: Investigate multiple strange bugs from the `foldexpr` line which only seems to apply on Linux.
+	I blame the foldexpr because the bugs only started once I migrated to Neovim 0.12 and changed the foldexpr.
+
+	When restoring folds from a view-file - with or without a session - syntax folds work (JSON files) but treesitter don't:
+		- With a session:
+			- The treesitter file types ignore the view and begin with all the folds open.
+			- Subsequent folding works.
+		- Without a session:
+			- The treesitter file types ignore the view and begin with all the folds open.
+			- Subsequent folding does not work. It complains with `E490: No fold found`.
+
+	Some debugging work (which went nowhere) was to look at an example view-file which gets generated:
+	````
+	setlocal foldmethod=expr
+	setlocal foldexpr=v:lua.vim.treesitter.foldexpr()
+	setlocal foldmarker={{{,}}}
+	setlocal foldignore=#
+	setlocal foldlevel=99
+	setlocal foldminlines=1
+	setlocal foldnestmax=20
+	setlocal foldenable
+	10
+	sil! normal! zc
+	````
+
+	Note that `foldlevel=99` is also set prior in this lua file, which gets sourced by init.lua.
+	Also the foldmethod and foldexpr are set in this lua file, which gets sourced by ftplugin.
+	So there is some redundant behavior here.
+	However, none of that helps to explain why the `zc` line isn't working.
+	It also doesn't explain why no folds are found in the case without a session.
+
+	All of this is mysterious, and applies on Linux but not on Mac.
+	]]
 end
 
 return M

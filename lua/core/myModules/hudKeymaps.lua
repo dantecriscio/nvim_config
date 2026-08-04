@@ -91,11 +91,13 @@ map(default_key_map_modes, "<Leader>vp", function()
 	onlyHide({ "relative_line_numbers", "buffer_sign_column" })
 end)
 
-function M.default_display()
-	print("Heads Up Display - Default Hud")
+function M.set_default_display()
 	onlyHide({ "relative_line_numbers", "strict", "color_column", "buffer_sign_column" })
 end
 
-map(default_key_map_modes, "<Leader>vo", M.default_display)
+map(default_key_map_modes, "<Leader>vo", function()
+	print("Heads Up Display - Default Hud")
+	M.set_default_display()
+end)
 
 return M

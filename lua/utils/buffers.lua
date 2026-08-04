@@ -1,5 +1,17 @@
 local M = {}
 
+--- Return true if it is a buffer where all are true:
+--- 1. Buffer is currently listed
+--- 2. Buffer name isn't empty (isn't the "No Name" buffer)
+--- 3. Is the normal buffer type (not "scratch" or something)
+---@param bufnr integer
+---@return boolean
+function M.is_normal_file_buffer(bufnr)
+	return vim.fn.buflisted(bufnr) == 1
+	and vim.fn.empty(vim.fn.bufname(bufnr)) == 0
+	and vim.api.nvim_get_option_value("buftype", { buf = bufnr }) == ""
+end
+
 --- Gets the buffers ids which are listed, excluding the [No Name] buffer
 ---@return integer[]
 function M.get_listed_user_buffer_ids()
@@ -29,7 +41,7 @@ function M.clean_no_name_buffers()
 	-- Loop over all buffers, including hidden and unlisted ones. Like ':ls!'
 	for _, n in ipairs(vim.api.nvim_list_bufs()) do
         -- Check if the buffer is safe to delete
-		if vim.fn.buflisted(n) == 1 and -- Is already unlisted
+		if vim.fn.buflisted(n) == 1 and -- Is currently listed
             vim.fn.empty(vim.fn.bufname(n)) == 1 and -- Has no name
 			vim.fn.bufwinnr(n) < 0 and -- Not in the current window
 			vim.fn.getbufvar(n, '&mod') == 0 -- Hasn't been modified

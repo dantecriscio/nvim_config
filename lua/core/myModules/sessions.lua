@@ -1,14 +1,14 @@
-local default_display = require("core.myModules.hudKeymaps").default_display
+local is_normal_file_buffer = require("utils.buffers").is_normal_file_buffer
+local get_buffer_ids = require("utils.buffers").get_buffer_ids
+local set_default_display = require("core.myModules.hudKeymaps").set_default_display
 
 local session_group = vim.api.nvim_create_augroup("sessions", { clear = true })
 
 -- If vim was called with any arguments, set the default hud and then return
 if vim.v.argv[3] ~= nil then
 	vim.api.nvim_create_autocmd({ "VimEnter" }, {
-		pattern = "*",
 		group = session_group,
-
-		callback = default_display
+		callback = set_default_display
 	})
 
 	return
@@ -27,6 +27,17 @@ local session_path = paths.Sessions .. paths.serialize_path(initial_directory)
     .. "_session.vim"
 local hud_path = paths.Sessions .. paths.serialize_path(initial_directory)
     .. "_hud.lua"
+
+local function unlist_undesired_buffers()
+	local undesired_buffer_filer = function(bufnr)
+		return not is_normal_file_buffer(bufnr)
+	end
+	for _, bufnr in ipairs(get_buffer_ids(undesired_buffer_filer)) do
+		vim.bo[bufnr].buflisted = false
+	end
+
+
+end
 
 local function save_hud()
     local hud_file = io.open(hud_path, "w")
@@ -50,7 +61,7 @@ end
 
 local function restore_hud()
     if vim.fn.filereadable(hud_path) == 0 then
-        default_display()
+        set_default_display()
         return
     end
 
@@ -84,19 +95,18 @@ end
 
 
 vim.api.nvim_create_autocmd({ "VimLeavePre" }, {
-	pattern = "*",
 	group = session_group,
-
 	callback = function()
+		-- Prevents scratch buffers and de-compiled buffers from being saved
+		unlist_undesired_buffers()
+
         save_hud()
         save_session()
 	end,
 })
 
 vim.api.nvim_create_autocmd({ "VimEnter" }, {
-	pattern = "*",
 	group = session_group,
-
 	callback = function()
         restore_hud()
         restore_session()
