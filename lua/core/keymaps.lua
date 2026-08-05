@@ -83,3 +83,8 @@ map(default_key_map_modes, "<leader>I", "<C-x>")
 -- Common to remap gd to LSP "Go to Definition
 -- But the original gd is still useful. So map gn to this
 map(alpabetical_key_map_modes, "gn", "gd")
+
+-- Easier commenting
+vim.keymap.set({"n"}, "C", "gcc", {remap = true})
+vim.keymap.set({"v"}, "C", "gc", {remap = true})
+
