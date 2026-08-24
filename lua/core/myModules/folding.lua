@@ -70,7 +70,14 @@ vim.api.nvim_create_autocmd({ "BufWinEnter" }, {
   group = remember,
   callback = function (args)
   	if is_normal_file_buffer(args.buf) then
-		vim.cmd("silent! loadview")
+		-- `silent!`
+		-- If first time ever opening buffer and view file doesn't exist
+
+		-- `noautocmd`
+		-- For some dumb reason, view-files end with `doautoall SessionLoadPost`
+		-- This breaks the barbar plugin, since it will then reset the tab order
+		-- It also makes no sense, as View and Sessions are different conceptually
+		vim.cmd("silent! noautocmd loadview")
 	end
   end,
 })
@@ -87,7 +94,7 @@ function M.setup_treesitter_folding()
 	vim.wo[0][0].foldexpr = "v:lua.vim.treesitter.foldexpr()"
 
 	--[[
-	TODO: Investigate multiple strange bugs from the `foldexpr` line which only seems to apply on Linux.
+	TODO: Investigate multiple strange bugs from the `foldexpr` line which only seems to apply on Amazon Linux.
 	I blame the foldexpr because the bugs only started once I migrated to Neovim 0.12 and changed the foldexpr.
 
 	When restoring folds from a view-file - with or without a session - syntax folds work (JSON files) but treesitter don't:
@@ -118,7 +125,7 @@ function M.setup_treesitter_folding()
 	However, none of that helps to explain why the `zc` line isn't working.
 	It also doesn't explain why no folds are found in the case without a session.
 
-	All of this is mysterious, and applies on Linux but not on Mac.
+	All of this is mysterious, and applies on Amazon Linux but not on Fedora 44 or Mac.
 	]]
 end
 

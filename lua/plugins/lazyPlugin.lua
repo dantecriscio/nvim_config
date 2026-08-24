@@ -2,5 +2,5 @@
 
 return { {
 	"folke/lazy.nvim",
-	tag = "v11.17.1",
+	tag = "v11.17.5",
 } }
