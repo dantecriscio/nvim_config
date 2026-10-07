@@ -86,5 +86,5 @@ map(alpabetical_key_map_modes, "gn", "gd")
 
 -- Easier commenting
 vim.keymap.set({"n"}, "C", "gcc", {remap = true})
-vim.keymap.set({"v"}, "C", "gc", {remap = true})
+vim.keymap.set({"x"}, "C", "gc", {remap = true})
 
