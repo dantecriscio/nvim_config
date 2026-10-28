@@ -126,30 +126,36 @@ local function get_server_config(server_config_params)
 				-- Gives extra code action capabilities, and ability to "gd" into class files
 				classFileContentsSupport = true,
 			},
-		},
-		post_init_settings = {
-			java = {
-				-- Don't try to build the project automatically
-				-- Let me decide when to run the build commands
-				autobuild = {
-					enabled = false,
-				},
 
-				-- If true, will run run gradle buildship on startup (auto-generates .classpath file based on gradle config)
-				-- Set to false if you don't want .classpath files being overwritten
-				-- Set to true if making a simple gradle project, and this auto-generation is helpful
-				-- A really great alternative is to force jdtls to import as an eclipse project before gradle:
-				-- https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/257#issuecomment-350598939
-				import = {
-					gradle = {
-						enabled = true,
+			settings = {
+				java = {
+					autobuild = {
+						-- Don't try to build the project automatically
+						-- Let me decide when to run the build commands
+						enabled = false,
+					},
+
+					-- Documentation above is outdated, it is `imports` rather than `import`
+					imports = {
+						gradle = {
+							-- If true, will run run gradle buildship on startup (auto-generates .classpath file based on gradle config)
+							-- Set to false if you don't want .classpath files being overwritten
+							-- Set to true if making a simple gradle project, and this auto-generation is helpful
+							-- A really great alternative is to force jdtls to import as an eclipse project before gradle:
+							-- https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/257#issuecomment-350598939
+							enabled = true,
+						},
 					},
 				},
+			},
+		},
 
-				-- Formatting options
-				-- By default will insert tabs by whenever the "create method" code action is used
-				-- Instead use spaces, since Java Checkstyle linter prefers spaces
+		-- For some reason, some portion of the documented settings above need to run after initialization
+		post_init_settings = {
+			java = {
 				format = {
+					-- By default will insert tabs by whenever the "create method" code action is used
+					-- Instead use spaces, since Java Checkstyle linter prefers spaces
 					insertSpaces = true,
 				},
 			},
